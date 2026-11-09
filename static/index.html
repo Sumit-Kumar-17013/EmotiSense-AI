@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Emotion Analyzer | BiGRU Emotion Classification</title>
+<meta name="description" content="Deep learning emotion classification from text, powered by a BiGRU model.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h16"/></symbol>
+  <symbol id="i-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14c1 1.5 2.5 2 4 2s3-.5 4-2M9 9.5h.01M15 9.5h.01"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+  <symbol id="i-touch" viewBox="0 0 24 24"><path d="M9 11V5a2 2 0 1 1 4 0v6m0-1.5a2 2 0 0 1 4 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-4a2 2 0 0 1 3-2l1 1.5"/></symbol>
+</svg>
+
+<header class="nav" id="nav">
+  <a class="brand" href="#home"><span class="logo"></span>Emotion<b>AI</b></a>
+  <button class="menu-btn" id="menuBtn" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span></button>
+  <nav class="links" id="links" aria-label="Main">
+    <a href="#home" class="active">Home</a>
+    <a href="#analyze">Analyze</a>
+    <a href="#features">Features</a>
+    <a href="#how">How It Works</a>
+    <a href="#model">About Model</a>
+  </nav>
+  <div class="nav-end">
+    <span class="status" id="status" title="Backend connection"><i></i><span id="statusText">Checking…</span></span>
+    <button class="icon-btn" id="themeBtn" aria-label="Toggle light or dark theme">◐</button>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="home">
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+  <div class="hero-copy">
+    <h1>Understand Emotions. Decode Human Feelings with AI.</h1>
+    <p>An intelligent deep learning-powered emotion classification system that analyzes text and identifies human emotions using advanced Natural Language Processing.</p>
+    <div class="cta">
+      <a class="btn primary" href="#analyze">Start Analyzing</a>
+      <a class="btn ghost" href="#features">Explore Features</a>
+    </div>
+  </div>
+  <div class="hero-viz glass" aria-hidden="true">
+    <div class="wave" id="wave"></div>
+    <div class="chips"><span style="--c:#facc15">Joy</span><span style="--c:#60a5fa">Sadness</span><span style="--c:#f472b6">Love</span><span style="--c:#fb7185">Anger</span><span style="--c:#a78bfa">Fear</span><span style="--c:#22d3ee">Surprise</span></div>
+  </div>
+</section>
+
+<section class="section" id="analyze">
+  <div class="head reveal"><h2>Emotion analysis workspace</h2><p>Write a sentence and the trained BiGRU model will classify the emotion.</p></div>
+  <div class="work">
+    <div class="glass panel reveal">
+      <label for="text" class="sr">Text to analyze</label>
+      <textarea id="text" maxlength="2000" placeholder="Write something about how you feel..."></textarea>
+      <div class="meta"><span><b id="chars">0</b>/2000 characters</span><span><b id="words">0</b> words</span></div>
+      <div class="row">
+        <button class="btn primary" id="analyzeBtn" disabled><span class="spin"></span><span id="btnLabel">Analyze Emotion</span></button>
+        <button class="btn ghost" id="clearBtn">Clear text</button>
+        <button class="btn ghost" id="randomBtn">Random example</button>
+      </div>
+      <div class="samples" id="samples" aria-label="Example sentences"></div>
+      <p class="error" id="error" role="alert" hidden></p>
+    </div>
+
+    <div class="glass panel result reveal" id="result" aria-live="polite">
+      <div class="empty" id="empty">
+        <svg viewBox="0 0 120 90" width="120"><rect x="8" y="12" width="104" height="66" rx="14" fill="none" stroke="currentColor" opacity=".35"/><path d="M28 56c8-18 14 10 22-6s12 14 20-8 12 6 22-4" fill="none" stroke="var(--cyan)" stroke-width="3" stroke-linecap="round"/></svg>
+        <h3>No analysis yet</h3><p>Type a sentence or pick an example, then choose Analyze Emotion.</p>
+      </div>
+      <div class="out" id="out" hidden>
+        <div class="top">
+          <div class="ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" class="track"/><circle cx="60" cy="60" r="52" class="fill" id="ringFill"/></svg><div class="pct"><b id="pct">0</b>%</div></div>
+          <div class="pred"><span class="big-emoji" id="emoji"></span><h3 id="emotion"></h3><p id="quote"></p></div>
+        </div>
+        <div class="bars" id="bars"></div>
+        <div class="row"><button class="btn ghost sm" id="copyBtn">Copy result</button><button class="btn ghost sm" id="dlBtn">Download report</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass panel history reveal">
+    <div class="hist-head"><h3>Recent analyses</h3><button class="btn ghost sm" id="clearHist">Clear history</button></div>
+    <ul id="histList"></ul>
+    <p class="muted" id="histEmpty">Your last analyses are saved in this browser only.</p>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="head reveal"><h2>What powers the analyzer</h2><p>From tokenization to probabilities, everything runs on your own backend.</p></div>
+  <div class="grid">
+    <article class="card reveal"><svg class="ic"><use href="#i-chip"/></svg><h3>Deep Learning Powered</h3><p>A Bidirectional GRU reads the sentence forwards and backwards, so each word is understood in the context of the words around it.</p></article>
+    <article class="card reveal"><svg class="ic"><use href="#i-text"/></svg><h3>Natural Language Processing</h3><p>Text is lowercased and cleaned, then a Keras Tokenizer turns words into numbers the model can read.</p></article>
+    <article class="card reveal"><svg class="ic"><use href="#i-smile"/></svg><h3>Six Emotion Detection</h3><p>Classifies text as sadness, joy, love, anger, fear or surprise.</p></article>
+    <article class="card reveal"><svg class="ic"><use href="#i-bolt"/></svg><h3>Real-Time Analysis</h3><p>Each prediction comes live from the connected FastAPI backend.</p></article>
+    <article class="card reveal"><svg class="ic"><use href="#i-chart"/></svg><h3>Confidence Visualization</h3><p>See the probability the model gives to every emotion, not just the winner.</p></article>
+    <article class="card reveal"><svg class="ic"><use href="#i-touch"/></svg><h3>Interactive Experience</h3><p>Try many sentences quickly, revisit past results and export a report.</p></article>
+  </div>
+</section>
+
+<section class="section" id="how">
+  <div class="head reveal"><h2>How it works</h2><p>Seven steps from your sentence to a prediction.</p></div>
+  <ol class="flow">
+    <li class="reveal"><b>1</b><div><h4>You enter text</h4><p>Any sentence up to 2,000 characters.</p></div></li>
+    <li class="reveal"><b>2</b><div><h4>Preprocessing</h4><p>The text is lowercased and stripped of symbols.</p></div></li>
+    <li class="reveal"><b>3</b><div><h4>Tokenization</h4><p>The Keras Tokenizer maps words to numbers.</p></div></li>
+    <li class="reveal"><b>4</b><div><h4>Padding</h4><p>Sequences are fixed to 50 tokens.</p></div></li>
+    <li class="reveal"><b>5</b><div><h4>BiGRU model</h4><p>The network reads the sequence in both directions.</p></div></li>
+    <li class="reveal"><b>6</b><div><h4>Softmax</h4><p>Scores become probabilities across six emotions.</p></div></li>
+    <li class="reveal"><b>7</b><div><h4>Result</h4><p>The top emotion and its confidence appear here.</p></div></li>
+  </ol>
+</section>
+
+<section class="section" id="model">
+  <div class="head reveal"><h2>About the model</h2><p>The technical details of this system.</p></div>
+  <div class="glass panel reveal">
+    <dl class="specs">
+      <div><dt>Architecture</dt><dd>Bidirectional Gated Recurrent Unit (BiGRU)</dd></div>
+      <div><dt>Technology</dt><dd>Deep Learning</dd></div>
+      <div><dt>Domain</dt><dd>Natural Language Processing</dd></div>
+      <div><dt>Backend</dt><dd>Python and FastAPI</dd></div>
+      <div><dt>Framework</dt><dd>TensorFlow / Keras</dd></div>
+      <div><dt>Text processing</dt><dd>Keras Tokenizer</dd></div>
+      <div><dt>Max sequence length</dt><dd>50</dd></div>
+      <div><dt>Emotion classes</dt><dd>6</dd></div>
+    </dl>
+    <div class="pipe"><span>Input Text</span><span>Preprocessing</span><span>Tokenization</span><span>Padding</span><span>BiGRU</span><span>Softmax</span><span>Emotion Prediction</span></div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div><a class="brand" href="#home"><span class="logo"></span>Emotion<b>AI</b></a><p>An AI-based emotion classification system built with a BiGRU deep learning model.</p></div>
+  <div><h4>Stack</h4><p>Python · FastAPI · TensorFlow / Keras · HTML, CSS, JavaScript</p></div>
+  <div><h4>Navigate</h4><p><a href="#analyze">Analyze</a> <a href="#features">Features</a> <a href="#how">How It Works</a> <a href="#model">About Model</a> <a href="https://github.com/" target="_blank" rel="noopener">GitHub</a></p></div>
+  <small>© <span id="year"></span> AI Emotion Analyzer. All rights reserved.</small>
+</footer>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
